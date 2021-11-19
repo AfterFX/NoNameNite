@@ -6,10 +6,5 @@ import Signup from './screens/Signup';
 import Welcome from './screens/Welcome';
 
 export default function App() {
-  return <Welcome />;
+  return <Signup />;
 }
-
-
-
-
-//tutorial pause: https://youtu.be/BQ-kHwLlhrg?t=1827
