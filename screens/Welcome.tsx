@@ -15,12 +15,13 @@ import {
 } from "../components/styles";
 
 const Welcome = ({navigation, route}) => {
-    const { name, email } = route.params;
+    const { name, email, photoUrl } = route.params;
+    const AvatarImg = photoUrl ? { uri: photoUrl } : require('./../assets/img/img1.png');
     return (
         <>
             <StatusBar style="light" />
             <InnerContainer>
-                    <WelcomeImage resizeMode="cover" source={require('./../assets/img/img2.png')}/>
+                    <WelcomeImage resizeMode="cover" source={AvatarImg}/>
                 <WelcomeContainer>
                     <PageTitle welcome={true}>Welcome! Buddy</PageTitle>
                     <SubTitle welcome={true}>{name || 'John Deo'}</SubTitle>
