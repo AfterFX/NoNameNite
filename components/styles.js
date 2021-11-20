@@ -1,10 +1,10 @@
 import styled from 'styled-components';
-import {View, Text, Image, TextInput, TouchableOpacity} from "react-native";
-import Constants from "expo-constants";
+import { View, Text, TouchableOpacity, TextInput, Image } from 'react-native';
+import Constants from 'expo-constants';
 
 const StatusBarHeight = Constants.statusBarHeight;
 
-//colors
+// colors
 export const Colors = {
     primary: "#ffffff",
     secondary: "#E5E7EB",
@@ -22,11 +22,11 @@ export const StyledContainer = styled.View`
     padding: 25px;
     padding-top: ${StatusBarHeight + 30}px;
     background-color: ${primary};
-`
+`;
 
 export const InnerContainer = styled.View`
-    flex: 1;
     width: 100%;
+    flex: 1;
     align-items: center;
 `;
 
@@ -73,16 +73,13 @@ export const SubTitle = styled.Text`
     font-size: 18px;
     margin-bottom: 20px;
     letter-spacing: 1px;
+    font-weight: bold;
     color: ${tertiary};
 
     ${(props) => props.welcome && `
         margin-bottom: 5px;
         font-weight: normal;
     `}
-`;
-
-export const StyledFormArea = styled.View`
-    width: 90%;
 `;
 
 export const StyledTextInput = styled.TextInput`
@@ -146,7 +143,7 @@ export const ButtonText = styled.Text`
 export const MsgBox = styled.Text`
     text-align: center;
     font-size: 13px;
-    color: ${props => props.type == 'SUCCES' ? green : red};
+    color: ${props => props.type == "SUCCES" ? green : red};
 `;
 
 export const Line = styled.View`
@@ -154,6 +151,10 @@ export const Line = styled.View`
     width: 100%;
     background-color: ${darkLight};
     margin-vertical: 10px;
+`;
+
+export const StyledFormArea = styled.View`
+  width: 90%;
 `;
 
 export const ExtraView = styled.View`

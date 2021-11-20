@@ -1,57 +1,60 @@
-import React, {useState} from 'react';
+import React, { useState, useContext } from 'react';
 import { StatusBar } from 'expo-status-bar';
 
-//formik
-import {Formik} from 'formik';
-
-// icons
-import {Octicons, Ionicons, Fontisto } from '@expo/vector-icons';
+// formik
+import { Formik } from 'formik';
 
 import {
-    StyledContainer,
-    InnerContainer,
-    PageLogo,
-    PageTitle,
-    SubTitle,
-    StyledFormArea,
-    LeftIcon,
-    StyledInputLabel,
-    StyledTextInput,
-    RightIcon,
-    StyledButton,
-    ButtonText,
-    Colors,
-    MsgBox,
-    Line,
-    ExtraView,
-    ExtraText,
-    TextLink,
-    TextLinkContent
-} from "../components/styles";
+  StyledContainer,
+  PageTitle,
+  StyledInputLabel,
+  StyledFormArea,
+  StyledButton,
+  StyledTextInput,
+  LeftIcon,
+  RightIcon,
+  InnerContainer,
+  ButtonText,
+  MsgBox,
+  Line,
+  ExtraView,
+  ExtraText,
+  TextLink,
+  TextLinkContent,
+  SubTitle,
+  Colors,
+} from '../components/styles';
 import { View, TouchableOpacity, ActivityIndicator } from 'react-native';
 
-// Colors
-const {brand, darkLight, primary} = Colors;
+//colors
+const { darkLight, brand, primary } = Colors;
 
-//Datetimepicker
+// icon
+import { Octicons, Ionicons } from '@expo/vector-icons';
+
+// Datetimepicker
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 // keyboard avoiding view
 import KeyboardAvoidingWrapper from '../components/KeyboardAvoidingWrapper'
 
-//api client
-import axios from "axios";
+// api client
+import axios from 'axios';
 
+// Async storage
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const Signup = ({navigation}) => {
+// credentials context
+import { CredentialsContext } from "../components/CredentialsContext";
+
+const Signup = ({ navigation }) => {
     const [hidePassword, setHidePassword] = useState(true);
     const [show, setShow] = useState(false);
     const [date, setDate] = useState(new Date(2000, 0, 1));
-
     const [message, setMessage] = useState();
     const [messageType, setMessageType] = useState();
 
-    //Actual date of birth to be sent
+    // Actual value to be sent
     const [dob, setDob] = useState();
 
     const onChange = (event, selectedDate) => {
@@ -59,41 +62,55 @@ const Signup = ({navigation}) => {
         setShow(false);
         setDate(currentDate);
         setDob(currentDate);
-    }
+    };
 
     const showDatePicker = () => {
-        setShow(true)
-    }
+        setShow('date');
+    };
+
+    //context
+    const {storedCredentials, setStoredCredentials} = useContext(CredentialsContext);
 
     //form handling
     const handleSignup =  async (credentials, setSubmitting) => {
         handleMessage(null);
         const url = 'http://192.168.1.107:8081/user/Signup'
-
-        await axios
+        axios
             .post(url, credentials)
             .then((response) => {
                 const result = response.data;
-                const {message, status, data} = result;
+                const { status, message, data } = result;
+
                 if (status !== 'SUCCESS') {
-                    handleMessage(message, status)
+                    handleMessage(message, status);
                 } else {
-                    navigation.navigate('Welcome', { ...data });
+                    persistLogin({ ...data }, message, status);
                 }
                 setSubmitting(false);
             })
-            .catch(error => {
-                // console.log(error.JSON());
-                // console.log(error);
+            .catch((error) => {
                 setSubmitting(false);
-                handleMessage("An error occurred. Check your network and try again");
-            })
-    }
+                handleMessage('An error occurred. Check your network and try again');
+                console.log(error.toJSON());
+            });
+    };
 
     const handleMessage = (message, type = 'FAILED') => {
         setMessage(message);
         setMessageType(type);
-    }
+    };
+
+    const persistLogin = (credentials, message, status) => {
+        AsyncStorage.setItem('natureCribCredentials', JSON.stringify(credentials))
+            .then(() => {
+                handleMessage(message, status);
+                setStoredCredentials(credentials);
+            })
+            .catch((error) => {
+                handleMessage('Persisting login failed');
+                console.log(error);
+            });
+    };
 
     return (
         <KeyboardAvoidingWrapper>
@@ -107,71 +124,77 @@ const Signup = ({navigation}) => {
                         <DateTimePicker
                             testID="dateTimePicker"
                             value={date}
-                            mode='date'
+                            mode="date"
                             is24Hour={true}
                             display="default"
                             onChange={onChange}
+                            style={{
+                                backgroundColor: 'yellow',
+                            }}
                         />
                     )}
 
                     <Formik
                         initialValues={{ name: '', email: '', dateOfBirth: '', password: '', confirmPassword: ''}}
-                        onSubmit={(values, {setSubmitting}) => {
-                            values = {...values, dateOfBirth: dob}
+                        onSubmit={(values, { setSubmitting }) => {
+                            values = { ...values, dateOfBirth: dob };
                             if (values.email == '' || values.password == '' || values.name == '' || values.dateOfBirth == '' || values.confirmPassword == '') {
-                                handleMessage('Please fill all the fields')
+                                handleMessage('Please fill in all fields');
                                 setSubmitting(false);
                             } else if (values.password !== values.confirmPassword) {
-                                handleMessage('Passwords do not match')
+                                handleMessage('Passwords do not match');
                                 setSubmitting(false);
                             } else {
                                 handleSignup(values, setSubmitting);
                             }
                         }}
-                    >{({handleChange, handleBlur, handleSubmit, values, isSubmitting}) => (<StyledFormArea>
+                    >
+                        {({ handleChange, handleBlur, handleSubmit, values, isSubmitting }) => (
+                    <StyledFormArea>
                         <MyTextInput
                             label="Full Name"
-                            icon="person"
                             placeholder="Richard Barnes"
                             placeholderTextColor={darkLight}
                             onChangeText={handleChange('name')}
-                            onblur={handleBlur('name')}
+                            onBlur={handleBlur('name')}
                             value={values.name}
+                            icon="person"
                         />
 
                         <MyTextInput
                             label="Email Address"
-                            icon="mail"
                             placeholder="exemple@gmail.com"
                             placeholderTextColor={darkLight}
                             onChangeText={handleChange('email')}
-                            onblur={handleBlur('email')}
+                            onBlur={handleBlur('email')}
                             value={values.email}
                             keyboardType="email-address"
+                            icon="mail"
                         />
 
                         <MyTextInput
                             label="Date of Birth"
-                            icon="calendar"
-                            placeholder="YYYY- MM - DD"
+
+                            placeholder="YYYY - MM - DD"
                             placeholderTextColor={darkLight}
                             onChangeText={handleChange('dateOfBirth')}
-                            onblur={handleBlur('dateOfBirth')}
+                            onBlur={handleBlur('dateOfBirth')}
                             value={dob ? dob.toDateString() : ''}
-                            isDate={true}
+                            icon="calendar"
                             editable={false}
+                            isDate={true}
                             showDatePicker={showDatePicker}
                         />
 
                         <MyTextInput
                             label="Password"
-                            icon="lock"
                             placeholder="* * * * * * * *"
                             placeholderTextColor={darkLight}
                             onChangeText={handleChange('password')}
-                            onblur={handleBlur('password')}
+                            onBlur={handleBlur('password')}
                             value={values.password}
                             secureTextEntry={hidePassword}
+                            icon="lock"
                             isPassword={true}
                             hidePassword={hidePassword}
                             setHidePassword={setHidePassword}
@@ -179,38 +202,39 @@ const Signup = ({navigation}) => {
 
                         <MyTextInput
                             label="Confirm Password"
-                            icon="lock"
                             placeholder="* * * * * * * *"
                             placeholderTextColor={darkLight}
                             onChangeText={handleChange('confirmPassword')}
-                            onblur={handleBlur('confirmPassword')}
+                            onBlur={handleBlur('confirmPassword')}
                             value={values.confirmPassword}
                             secureTextEntry={hidePassword}
+                            icon="lock"
                             isPassword={true}
                             hidePassword={hidePassword}
                             setHidePassword={setHidePassword}
                         />
                         <MsgBox type={messageType}>{message}</MsgBox>
+
                         {!isSubmitting && (
                             <StyledButton onPress={handleSubmit}>
                                 <ButtonText>Login</ButtonText>
                             </StyledButton>
                         )}
-
                         {isSubmitting && (
                             <StyledButton disabled={true}>
                                 <ActivityIndicator size="large" color={primary} />
                             </StyledButton>
                         )}
 
-                        <Line/>
+                        <Line />
                         <ExtraView>
                             <ExtraText>Already have an account? </ExtraText>
                             <TextLink onPress={() => navigation.navigate('Login')}>
                                 <TextLinkContent>Login</TextLinkContent>
                             </TextLink>
                         </ExtraView>
-                    </StyledFormArea>)}
+                    </StyledFormArea>
+                    )}
                     </Formik>
                 </InnerContainer>
             </StyledContainer>
@@ -219,22 +243,27 @@ const Signup = ({navigation}) => {
 };
 
 const MyTextInput = ({ label, icon, isPassword, hidePassword, setHidePassword, isDate, showDatePicker, ...props }) => {
-    return (<View>
+    return (
+    <View>
         <LeftIcon>
             <Octicons name={icon} size={30} color={brand} />
         </LeftIcon>
         <StyledInputLabel>{label}</StyledInputLabel>
-        {!isDate && <StyledTextInput {...props} />}
-        {isDate && <TouchableOpacity onPress={showDatePicker}>
+        {isDate && (
+            <TouchableOpacity onPress={showDatePicker}>
+                <StyledTextInput {...props} />
+            </TouchableOpacity>
+        )}
+        {!isDate && (
             <StyledTextInput {...props} />
-        </TouchableOpacity>}
+        )}
         {isPassword && (
             <RightIcon onPress={() => setHidePassword(!hidePassword)}>
                 <Ionicons name={hidePassword ?  'md-eye-off' : 'md-eye'} size={30} color={darkLight}/>
             </RightIcon>
         )}
-    </View>)
-
-}
+    </View>
+    );
+};
 
 export default Signup;

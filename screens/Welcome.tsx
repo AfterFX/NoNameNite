@@ -1,44 +1,59 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { StatusBar } from 'expo-status-bar';
 
 import {
-    InnerContainer,
-    PageTitle,
-    SubTitle,
-    StyledFormArea,
-    StyledButton,
-    ButtonText,
-    Line,
-    WelcomeContainer,
-    WelcomeImage,
-    Avatar
-} from "../components/styles";
+  Avatar,
+  WelcomeImage,
+  PageTitle,
+  SubTitle,
+  StyledFormArea,
+  StyledButton,
+  InnerContainer,
+  WelcomeContainer,
+  ButtonText,
+  Line,
+} from '../components/styles';
 
-const Welcome = ({navigation, route}) => {
-    const { name, email, photoUrl } = route.params;
+// Async storage
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// credentials context
+import { CredentialsContext } from '../components/CredentialsContext';
+
+const Welcome = () => {
+    // credentials context
+    const { storedCredentials, setStoredCredentials } = useContext(CredentialsContext);
+
+    const { name, email, photoUrl } = storedCredentials;
+
     const AvatarImg = photoUrl ? { uri: photoUrl } : require('./../assets/img/img1.png');
+
+    const clearLogin = () => {
+      AsyncStorage.removeItem('natureCribCredentials')
+          .then(() => {
+              setStoredCredentials("");
+          })
+          .catch((error) => console.log(error));
+    };
+
     return (
         <>
             <StatusBar style="light" />
             <InnerContainer>
-                    <WelcomeImage resizeMode="cover" source={AvatarImg}/>
+                <WelcomeImage resizeMode="cover" source={require('./../assets/img/img2.png')}/>
                 <WelcomeContainer>
                     <PageTitle welcome={true}>Welcome! Buddy</PageTitle>
                     <SubTitle welcome={true}>{name || 'John Deo'}</SubTitle>
                     <SubTitle welcome={true}>{email || 'John.@gmail.com'}</SubTitle>
                     <StyledFormArea>
-                    <Avatar resizeMode="cover" source={require('./../assets/img/img1.png')}/>
-                        <Line/>
-                    <StyledButton
-                        onPress={() => {
-                            navigation.navigate('Login')
-                        }}
-                    >
-                        <ButtonText>Logout</ButtonText>
-                    </StyledButton>
-
-
-                </StyledFormArea>
+                        <Avatar resizeMode="cover" source={AvatarImg} />
+                            <Line/>
+                        <StyledButton
+                            onPress={clearLogin}
+                        >
+                            <ButtonText>Logout</ButtonText>
+                        </StyledButton>
+                    </StyledFormArea>
                 </WelcomeContainer>
             </InnerContainer>
         </>
