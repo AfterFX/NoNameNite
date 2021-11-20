@@ -70,7 +70,6 @@ const Login = ({ navigation }) => {
                     handleMessage(message, status);
                 } else {
                     persistLogin({ ...data[0] }, message, status);
-                    console.log(data[0])
                 }
                 setSubmitting(false);
             })
