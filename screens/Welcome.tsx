@@ -14,7 +14,8 @@ import {
     Avatar
 } from "../components/styles";
 
-const Welcome = ({navigation}) => {
+const Welcome = ({navigation, route}) => {
+    const { name, email } = route.params;
     return (
         <>
             <StatusBar style="light" />
@@ -22,8 +23,8 @@ const Welcome = ({navigation}) => {
                     <WelcomeImage resizeMode="cover" source={require('./../assets/img/img2.png')}/>
                 <WelcomeContainer>
                     <PageTitle welcome={true}>Welcome! Buddy</PageTitle>
-                    <SubTitle welcome={true}>John Deo</SubTitle>
-                    <SubTitle welcome={true}>John.@gmail.com</SubTitle>
+                    <SubTitle welcome={true}>{name || 'John Deo'}</SubTitle>
+                    <SubTitle welcome={true}>{email || 'John.@gmail.com'}</SubTitle>
                     <StyledFormArea>
                     <Avatar resizeMode="cover" source={require('./../assets/img/img1.png')}/>
                         <Line/>

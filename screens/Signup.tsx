@@ -28,7 +28,7 @@ import {
     TextLink,
     TextLinkContent
 } from "../components/styles";
-import { View, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity, ActivityIndicator } from 'react-native';
 
 // Colors
 const {brand, darkLight, primary} = Colors;
@@ -39,11 +39,17 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 // keyboard avoiding view
 import KeyboardAvoidingWrapper from '../components/KeyboardAvoidingWrapper'
 
+//api client
+import axios from "axios";
+
 
 const Signup = ({navigation}) => {
     const [hidePassword, setHidePassword] = useState(true);
     const [show, setShow] = useState(false);
     const [date, setDate] = useState(new Date(2000, 0, 1));
+
+    const [message, setMessage] = useState();
+    const [messageType, setMessageType] = useState();
 
     //Actual date of birth to be sent
     const [dob, setDob] = useState();
@@ -57,6 +63,36 @@ const Signup = ({navigation}) => {
 
     const showDatePicker = () => {
         setShow(true)
+    }
+
+    //form handling
+    const handleSignup =  async (credentials, setSubmitting) => {
+        handleMessage(null);
+        const url = 'http://192.168.1.107:8081/user/Signup'
+
+        await axios
+            .post(url, credentials)
+            .then((response) => {
+                const result = response.data;
+                const {message, status, data} = result;
+                if (status !== 'SUCCESS') {
+                    handleMessage(message, status)
+                } else {
+                    navigation.navigate('Welcome', { ...data });
+                }
+                setSubmitting(false);
+            })
+            .catch(error => {
+                // console.log(error.JSON());
+                // console.log(error);
+                setSubmitting(false);
+                handleMessage("An error occurred. Check your network and try again");
+            })
+    }
+
+    const handleMessage = (message, type = 'FAILED') => {
+        setMessage(message);
+        setMessageType(type);
     }
 
     return (
@@ -79,20 +115,28 @@ const Signup = ({navigation}) => {
                     )}
 
                     <Formik
-                        initialValues={{ fullName: '', email: '', dateOfBirth: '', password: '', confirmPassword: ''}}
-                        onSubmit={(values) => {
-                            console.log(values);
-                            navigation.navigate('Welcome');
+                        initialValues={{ name: '', email: '', dateOfBirth: '', password: '', confirmPassword: ''}}
+                        onSubmit={(values, {setSubmitting}) => {
+                            values = {...values, dateOfBirth: dob}
+                            if (values.email == '' || values.password == '' || values.name == '' || values.dateOfBirth == '' || values.confirmPassword == '') {
+                                handleMessage('Please fill all the fields')
+                                setSubmitting(false);
+                            } else if (values.password !== values.confirmPassword) {
+                                handleMessage('Passwords do not match')
+                                setSubmitting(false);
+                            } else {
+                                handleSignup(values, setSubmitting);
+                            }
                         }}
-                    >{({handleChange, handleBlur, handleSubmit, values}) => (<StyledFormArea>
+                    >{({handleChange, handleBlur, handleSubmit, values, isSubmitting}) => (<StyledFormArea>
                         <MyTextInput
                             label="Full Name"
                             icon="person"
                             placeholder="Richard Barnes"
                             placeholderTextColor={darkLight}
-                            onChangeText={handleChange('fullName')}
-                            onblur={handleBlur('fullName')}
-                            value={values.fullName}
+                            onChangeText={handleChange('name')}
+                            onblur={handleBlur('name')}
+                            value={values.name}
                         />
 
                         <MyTextInput
@@ -146,10 +190,19 @@ const Signup = ({navigation}) => {
                             hidePassword={hidePassword}
                             setHidePassword={setHidePassword}
                         />
-                        <MsgBox>...</MsgBox>
-                        <StyledButton onPress={handleSubmit}>
-                            <ButtonText>Signup</ButtonText>
-                        </StyledButton>
+                        <MsgBox type={messageType}>{message}</MsgBox>
+                        {!isSubmitting && (
+                            <StyledButton onPress={handleSubmit}>
+                                <ButtonText>Login</ButtonText>
+                            </StyledButton>
+                        )}
+
+                        {isSubmitting && (
+                            <StyledButton disabled={true}>
+                                <ActivityIndicator size="large" color={primary} />
+                            </StyledButton>
+                        )}
+
                         <Line/>
                         <ExtraView>
                             <ExtraText>Already have an account? </ExtraText>

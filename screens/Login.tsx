@@ -28,7 +28,7 @@ import {
     TextLink,
     TextLinkContent
 } from "../components/styles";
-import {View} from 'react-native';
+import { View, ActivityIndicator } from 'react-native';
 
 // Colors
 const {brand, darkLight, primary} = Colors;
@@ -36,8 +36,42 @@ const {brand, darkLight, primary} = Colors;
 // keyboard avoiding view
 import KeyboardAvoidingWrapper from '../components/KeyboardAvoidingWrapper'
 
+// API client
+import axios from 'axios';
+
 const Login = ({navigation}) => {
-        const [hidePassword, setHidePassword] = useState(true);
+    const [hidePassword, setHidePassword] = useState(true);
+    const [message, setMessage] = useState();
+    const [messageType, setMessageType] = useState();
+
+    const handleLogin =  async (credentials, setSubmitting) => {
+        handleMessage(null);
+        const url = 'http://192.168.1.107:8081/user/signin'
+
+        await axios
+            .post(url, credentials)
+            .then((response) => {
+                const result = response.data;
+                const {message, status, data} = result;
+                if (status !== 'SUCCESS') {
+                    handleMessage(message, status)
+                } else {
+                    navigation.navigate('Welcome', { ...data[0] });
+                }
+                setSubmitting(false);
+            })
+            .catch(error => {
+            // console.log(error.JSON());
+            console.log(error);
+            setSubmitting(false);
+            handleMessage("An error occurred. Check your network and try again");
+        })
+    }
+
+    const handleMessage = (message, type = 'FAILED') => {
+        setMessage(message);
+        setMessageType(type);
+    }
 
     return (
         <KeyboardAvoidingWrapper>
@@ -49,11 +83,15 @@ const Login = ({navigation}) => {
                     <SubTitle>Account Login</SubTitle>
                     <Formik
                         initialValues={{email: '', password: ''}}
-                        onSubmit={(values) => {
-                            console.log(values);
-                            navigation.navigate("Welcome");
+                        onSubmit={(values, {setSubmitting}) => {
+                            if (values.email == '' || values.password == '') {
+                                handleMessage('Please fill all the fields')
+                                setSubmitting(false);
+                            } else {
+                                handleLogin(values, setSubmitting);
+                            }
                         }}
-                    >{({handleChange, handleBlur, handleSubmit, values}) => (<StyledFormArea>
+                    >{({handleChange, handleBlur, handleSubmit, values, isSubmitting}) => (<StyledFormArea>
                         <MyTextInput
                             label="Email Address"
                             icon="mail"
@@ -78,10 +116,19 @@ const Login = ({navigation}) => {
                             hidePassword={hidePassword}
                             setHidePassword={setHidePassword}
                         />
-                        <MsgBox>...</MsgBox>
-                        <StyledButton onPress={handleSubmit}>
-                            <ButtonText>Login</ButtonText>
-                        </StyledButton>
+                        <MsgBox type={messageType}>{message}</MsgBox>
+                        {!isSubmitting && (
+                            <StyledButton onPress={handleSubmit}>
+                                <ButtonText>Login</ButtonText>
+                            </StyledButton>
+                        )}
+
+                        {isSubmitting && (
+                            <StyledButton disabled={true}>
+                                <ActivityIndicator size="large" color={primary} />
+                            </StyledButton>
+                        )}
+
                         <Line/>
                         <StyledButton google={true} onPress={handleSubmit}>
                                 <Fontisto name="google" color={primary} size={25}/>
